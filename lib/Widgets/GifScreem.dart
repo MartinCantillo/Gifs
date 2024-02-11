@@ -10,12 +10,11 @@ class GifScreem extends StatefulWidget {
 }
 
 class _GifScreemState extends State<GifScreem> {
-  GiftServic giftServic = GiftServic();
-  late Future< List<Gifs>> gifsList;
+  late Future<List<Datum>> gifsList;
   @override
   void initState() {
     super.initState();
-    gifsList = giftServic.fecthGifs() ;
+    gifsList = GiftServic.fecthGifs();
   }
 
   @override
@@ -23,21 +22,53 @@ class _GifScreemState extends State<GifScreem> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text("hello"),
+          title: const Text("Gifs"),
           backgroundColor: Colors.black,
         ),
-        body: GridView.count(
-          crossAxisCount: 2,
-          children: List.generate(100, (index) {
-            return Center(
-              child: Text(
-                'Item $index',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-            );
-          }),
+        drawer: Drawer(
+          backgroundColor: Colors.white,
+        ),
+        body: FutureBuilder(
+          future: gifsList,
+          builder: (context, snapshot) {
+           // print(snapshot.data);
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
+              );
+            }
+            else if (gifsList == null) {
+              return Center(child: Text('El snapshot es nulo'));
+            } else {
+            
+              return ListView(children: Upload(snapshot.data),) ;
+            }
+          },
         ),
       ),
     );
+  }
+
+//Construyo los widgets
+  //Construyo los widgets
+  List<Widget> Upload(  gifs) {
+    List<Widget> uploadGifs = [];
+
+    // Verificar si gifs no es nulo
+    if (gifs != null) {
+      // Iterar sobre la lista de Gifs
+      for (var element in gifs) {
+        // Iterar sobre la lista de Datum dentro de cada Gifs
+
+          uploadGifs.add(Text(element.url));
+        
+      }
+    }
+
+    return uploadGifs;
   }
 }

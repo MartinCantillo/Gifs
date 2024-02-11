@@ -22,16 +22,31 @@ class _GifScreemState extends State<GifScreem> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Gifs"),
+          title: const Text(
+            "Gifs",
+            style: TextStyle(color: Colors.white),
+          ),
+          centerTitle: true,
           backgroundColor: Colors.black,
         ),
         drawer: Drawer(
           backgroundColor: Colors.white,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                  ),
+                  child: Text('Drawer Header',
+                      style: TextStyle(color: Colors.white))),
+            ],
+          ),
         ),
         body: FutureBuilder(
           future: gifsList,
           builder: (context, snapshot) {
-           // print(snapshot.data);
+            // print(snapshot.data);
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(),
@@ -40,12 +55,15 @@ class _GifScreemState extends State<GifScreem> {
               return Center(
                 child: Text('Error: ${snapshot.error}'),
               );
-            }
-            else if (gifsList == null) {
+            } else if (gifsList == null) {
               return Center(child: Text('El snapshot es nulo'));
             } else {
-            
-              return ListView(children: Upload(snapshot.data),) ;
+              return GridView.count(
+                crossAxisSpacing: 1,
+                mainAxisSpacing: 2,
+                crossAxisCount: 2,
+                children: Upload(snapshot.data),
+              );
             }
           },
         ),
@@ -53,19 +71,25 @@ class _GifScreemState extends State<GifScreem> {
     );
   }
 
-//Construyo los widgets
   //Construyo los widgets
-  List<Widget> Upload(  gifs) {
+  List<Widget> Upload(gifs) {
     List<Widget> uploadGifs = [];
 
-    // Verificar si gifs no es nulo
+    // Verifico si gifs no es nulo
     if (gifs != null) {
-      // Iterar sobre la lista de Gifs
+      // Itero sobre la lista de Gifs
       for (var element in gifs) {
-        // Iterar sobre la lista de Datum dentro de cada Gifs
-
-          uploadGifs.add(Text(element.url));
-        
+        // Itero sobre la lista de Datum dentro de cada Gifs
+        //uploadGifs.add(Column(children: [Image.network(element.url,fit: BoxFit.fill,)],));
+        uploadGifs.add(Card(
+          child: Column(children: [
+            Expanded(
+                child: Image.network(
+              element.url,
+              fit: BoxFit.fill,
+            ))
+          ]),
+        ));
       }
     }
 

@@ -12,9 +12,12 @@ class GiftServic {
       final response = await http.get(Uri.parse(endpoint));
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body)['data'];
+        //String body =utf8
         //  print(data);
         List<Datum> gifsList = data.map((e) => Datum.fromJson(e as Map<String, dynamic>)).toList();
-       
+        
+
+
         return gifsList;
       } else {
         throw Exception('Error del servidor ${response.statusCode}');

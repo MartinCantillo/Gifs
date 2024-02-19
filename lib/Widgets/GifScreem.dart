@@ -3,7 +3,7 @@ import 'package:gif/Models/Gifts.dart';
 import 'package:gif/Provider/GifService.dart';
 
 class GifScreem extends StatefulWidget {
-  const GifScreem({super.key});
+  const GifScreem({Key? key});
 
   @override
   State<GifScreem> createState() => _GifScreemState();
@@ -11,10 +11,52 @@ class GifScreem extends StatefulWidget {
 
 class _GifScreemState extends State<GifScreem> {
   late Future<List<Datum>> gifsList;
+  late ScrollController _scrollController;
+  List<Datum> _gifs = [];
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
     gifsList = GiftServic.fecthGifs();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset >=
+            _scrollController.position.maxScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      // Si no está cargando más datos actualmente, cargar más
+      if (!_isLoading) {
+        _loadMoreGifs();
+      }
+    }
+  }
+
+  Future<void> _loadMoreGifs() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final additionalGifs = await GiftServic.fecthGifs();
+      setState(() {
+        _gifs.addAll(additionalGifs);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading more gifs: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -46,7 +88,6 @@ class _GifScreemState extends State<GifScreem> {
         body: FutureBuilder(
           future: gifsList,
           builder: (context, snapshot) {
-            // print(snapshot.data);
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(),
@@ -55,44 +96,40 @@ class _GifScreemState extends State<GifScreem> {
               return Center(
                 child: Text('Error: ${snapshot.error}'),
               );
-            } else if (gifsList == null) {
-              return Center(child: Text('El snapshot es nulo'));
             } else {
-              return GridView.count(
-                crossAxisSpacing: 1,
-                mainAxisSpacing: 2,
-                crossAxisCount: 2,
-                children: Upload(snapshot.data),
+              _gifs = snapshot.data as List<Datum>;
+              return GridView.builder(
+                controller: _scrollController,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisSpacing: 1,
+                  mainAxisSpacing: 2,
+                  crossAxisCount: 2,
+                ),
+                itemCount: _gifs.length + (_isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index < _gifs.length) {
+                    return Card(
+                      child: Image.network(
+                        _gifs[index].url,
+                        fit: BoxFit.fill,
+                      ),
+                    );
+                  } else {
+                    return _isLoading
+                        ? Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : Container();
+                  }
+                },
               );
             }
           },
         ),
       ),
     );
-  }
-
-  //Construyo los widgets
-  List<Widget> Upload(gifs) {
-    List<Widget> uploadGifs = [];
-
-    // Verifico si gifs no es nulo
-    if (gifs != null) {
-      // Itero sobre la lista de Gifs
-      for (var element in gifs) {
-        // Itero sobre la lista de Datum dentro de cada Gifs
-        //uploadGifs.add(Column(children: [Image.network(element.url,fit: BoxFit.fill,)],));
-        uploadGifs.add(Card(
-          child: Column(children: [
-            Expanded(
-                child: Image.network(
-              element.url,
-              fit: BoxFit.fill,
-            ))
-          ]),
-        ));
-      }
-    }
-
-    return uploadGifs;
   }
 }
